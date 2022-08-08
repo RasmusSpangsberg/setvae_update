@@ -30,6 +30,7 @@ synsetid_to_cate = {
     '04256520': 'sofa', '04330267': 'stove', '04530566': 'vessel',
     '04554684': 'washer', '02992529': 'cellphone',
     '02843684': 'birdhouse', '02871439': 'bookshelf',
+    '42133742': 'tooth',
     # '02858304': 'boat', no boat in our dataset, merged into vessels
     # '02834778': 'bicycle', not in our taxonomy
 }
@@ -88,7 +89,15 @@ class Uniform15KPC(torch.utils.data.Dataset):
                 except:
                     continue
 
-                assert point_cloud.shape[0] == 15000
+                #print("point cloud shape: ", point_cloud.shape)  # should be (15k, 3)
+                if point_cloud.shape[0] > 15000:
+                    continue
+
+                if point_cloud.shape[0] != 15000:
+                    zeros = np.zeros((15000 - point_cloud.shape[0], 3))
+                    point_cloud = np.concatenate((point_cloud, zeros))
+
+                #assert point_cloud.shape[0] <= 15000
                 self.all_points.append(point_cloud[np.newaxis, ...])
                 self.cate_idx_lst.append(cate_idx)
                 self.all_cate_mids.append((subd, mid))

@@ -52,7 +52,7 @@ def main_worker(save_dir, args):
     else:
         logger = None
 
-    deepspeed.init_distributed(dist_backend='nccl')
+    #deepspeed.init_distributed(dist_backend='nccl')
     torch.cuda.set_device(args.local_rank)
 
     model = SetVAE(args)
@@ -210,7 +210,7 @@ def main():
     if args.seed is None:
         args.seed = random.randint(0, 1000000)
     set_random_seed(args.seed)
-
+    
     if args.local_rank == 0:
         send_slack(f'{args.log_name} started')
         print("Arguments:")

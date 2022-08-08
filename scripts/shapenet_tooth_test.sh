@@ -8,13 +8,15 @@ z_dim=16
 hidden_dim=64
 num_heads=4
 
-epochs=8000
 dataset_type=shapenet15k
-log_name=gen/shapenet15k-airplane/camera-ready
+log_name=gen/shapenet15k-tooth/camera-ready
 shapenet_data_dir="/train/ShapeNet/ShapeNetCore.v2.PC15k"
+epoch=200
+seed=34678
 
-python sample_and_summarize.py \
-  --cates airplane \
+python sample_and_test_all.py \
+  --cates tooth \
+  --epochs "${epoch}" \
   --input_dim ${input_dim} \
   --max_outputs ${max_outputs} \
   --init_dim ${init_dim} \
@@ -25,14 +27,13 @@ python sample_and_summarize.py \
   --num_heads ${num_heads} \
   --fixed_gmm \
   --train_gmm \
-  --epochs ${epochs} \
   --dataset_type ${dataset_type} \
   --log_name ${log_name} \
   --shapenet_data_dir ${shapenet_data_dir} \
   --slot_att \
   --ln \
   --eval \
-  --seed 42
+  --seed "${seed}"
 
 echo "Done"
 exit 0

@@ -7,7 +7,8 @@
 #include <vector>
 #include <iostream>
 
-#define CHECK_CUDA(x) AT_ASSERTM(x.type().is_cuda(), #x " must be a CUDA tensor")
+//#define CHECK_CUDA(x) AT_ASSERTM(x.type().is_cuda(), #x " must be a CUDA tensor")
+#define CHECK_CUDA(x) AT_ASSERTM(x.is_cuda(), #x " must be a CUDA tensor")
 #define CHECK_CONTIGUOUS(x) AT_ASSERTM(x.is_contiguous(), #x " must be contiguous")
 #define CHECK_INPUT(x) CHECK_CUDA(x); CHECK_CONTIGUOUS(x)
 
@@ -32,7 +33,7 @@ std::vector<at::Tensor> ApproxMatch(at::Tensor set_d, at::Tensor set_q) {
     CHECK_INPUT(match);
     CHECK_INPUT(temp);
     
-    approxmatch(batch_size,n_dataset_points,n_query_points,set_d.data<float>(),set_q.data<float>(),match.data<float>(),temp.data<float>(), at::cuda::getCurrentCUDAStream());
+    approxmatch(batch_size,n_dataset_points,n_query_points,set_d.data_ptr<float>(),set_q.data_ptr<float>(),match.data_ptr<float>(),temp.data_ptr<float>(), at::cuda::getCurrentCUDAStream());
     return {match, temp};
 }
 
@@ -47,7 +48,7 @@ at::Tensor MatchCost(at::Tensor set_d, at::Tensor set_q, at::Tensor match) {
     CHECK_INPUT(set_q);
     CHECK_INPUT(match);
     CHECK_INPUT(out);
-    matchcost(batch_size,n_dataset_points,n_query_points,set_d.data<float>(),set_q.data<float>(),match.data<float>(),out.data<float>(),at::cuda::getCurrentCUDAStream());
+    matchcost(batch_size,n_dataset_points,n_query_points,set_d.data_ptr<float>(),set_q.data_ptr<float>(),match.data_ptr<float>(),out.data_ptr<float>(),at::cuda::getCurrentCUDAStream());
     return out;
 }
 
@@ -64,7 +65,7 @@ std::vector<at::Tensor> MatchCostGrad(at::Tensor set_d, at::Tensor set_q, at::Te
     CHECK_INPUT(match);
     CHECK_INPUT(grad1);
     CHECK_INPUT(grad2);
-    matchcostgrad(batch_size,n_dataset_points,n_query_points,set_d.data<float>(),set_q.data<float>(),match.data<float>(),grad1.data<float>(),grad2.data<float>(),at::cuda::getCurrentCUDAStream());
+    matchcostgrad(batch_size,n_dataset_points,n_query_points,set_d.data_ptr<float>(),set_q.data_ptr<float>(),match.data_ptr<float>(),grad1.data_ptr<float>(),grad2.data_ptr<float>(),at::cuda::getCurrentCUDAStream());
     return {grad1, grad2};
 }
 
@@ -94,7 +95,7 @@ std::vector<at::Tensor> NNDistance(at::Tensor set_d, at::Tensor set_q) {
     CHECK_INPUT(dist2);
     CHECK_INPUT(idx2);
     // void nndistance(int b,int n,const float * xyz,int m,const float * xyz2,float * result,int * result_i,float * result2,int * result2_i, cudaStream_t stream);
-    nndistance(batch_size,n_dataset_points,set_d.data<float>(),n_query_points,set_q.data<float>(),dist1.data<float>(),idx1.data<int>(),dist2.data<float>(),idx2.data<int>(), at::cuda::getCurrentCUDAStream());
+    nndistance(batch_size,n_dataset_points,set_d.data_ptr<float>(),n_query_points,set_q.data_ptr<float>(),dist1.data_ptr<float>(),idx1.data_ptr<int>(),dist2.data_ptr<float>(),idx2.data_ptr<int>(), at::cuda::getCurrentCUDAStream());
     return {dist1, idx1, dist2, idx2};
 }
 
@@ -115,10 +116,10 @@ std::vector<at::Tensor> NNDistanceGrad(at::Tensor set_d, at::Tensor set_q, at::T
     CHECK_INPUT(grad1);
     CHECK_INPUT(grad2);
     //void nndistancegrad(int b,int n,const float * xyz1,int m,const float * xyz2,const float * grad_dist1,const int * idx1,const float * grad_dist2,const int * idx2,float * grad_xyz1,float * grad_xyz2, cudaStream_t stream);
-    nndistancegrad(batch_size,n_dataset_points,set_d.data<float>(),n_query_points,set_q.data<float>(),
-        grad_dist1.data<float>(),idx1.data<int>(),
-        grad_dist2.data<float>(),idx2.data<int>(),
-        grad1.data<float>(),grad2.data<float>(),
+    nndistancegrad(batch_size,n_dataset_points,set_d.data_ptr<float>(),n_query_points,set_q.data_ptr<float>(),
+        grad_dist1.data_ptr<float>(),idx1.data_ptr<int>(),
+        grad_dist2.data_ptr<float>(),idx2.data_ptr<int>(),
+        grad1.data_ptr<float>(),grad2.data_ptr<float>(),
         at::cuda::getCurrentCUDAStream());
     return {grad1, grad2};
 }

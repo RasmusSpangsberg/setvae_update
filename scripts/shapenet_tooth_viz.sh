@@ -8,13 +8,13 @@ z_dim=16
 hidden_dim=64
 num_heads=4
 
-epochs=8000
+epochs=800
 dataset_type=shapenet15k
-log_name=gen/shapenet15k-airplane/camera-ready
-shapenet_data_dir="/train/ShapeNet/ShapeNetCore.v2.PC15k"
+log_name=gen/shapenet15k-tooth/camera-ready
+shapenet_data_dir="/train/SetVae/ShapeNetCore.v2.PC15k"
 
-python sample_and_summarize.py \
-  --cates airplane \
+CUDA_VISIBLE_DEVICES="1" python sample_and_summarize.py \
+  --cates tooth \
   --input_dim ${input_dim} \
   --max_outputs ${max_outputs} \
   --init_dim ${init_dim} \

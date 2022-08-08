@@ -1,12 +1,13 @@
 ###############################################################################
 # Uncomment for debugging
-#DEBUG := 1
+DEBUG := 1
 # Pretty build
 #Q ?= @
 
 CXX := g++
 PYTHON := python
 NVCC := /usr/local/cuda/bin/nvcc
+#NVCC := /usr/lib/nvidia-cuda-toolkit/bin/nvcc
 
 # PYTHON Header path
 PYTHON_HEADER_DIR := $(shell $(PYTHON) -c 'from distutils.sysconfig import get_python_inc; print(get_python_inc())')
@@ -73,8 +74,8 @@ NVCCFLAGS += -std=c++11 -ccbin=$(CXX) -Xcompiler -fPIC $(COMMON_FLAGS)
 
 all: $(STATIC_LIB)
 	$(PYTHON) setup.py build
-	@ mv build/lib.linux-x86_64-3.6/StructuralLosses ..
-	@ mv build/lib.linux-x86_64-3.6/*.so ../StructuralLosses/
+	@ mv build/lib.linux-x86_64-3.9/StructuralLosses ..
+	@ mv build/lib.linux-x86_64-3.9/*.so ../StructuralLosses/
 	@- $(RM) -rf $(OBJ_DIR) build objs
 
 $(OBJ_DIR):

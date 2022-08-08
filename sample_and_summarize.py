@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 
 import torch
 import numpy as np
@@ -36,8 +36,10 @@ def get_test_loader(args):
 
 
 def collate(result):
+    print(result.keys(), len(result.keys()))
     # Concat summary
     for k, v in result.items():
+        print("current key:", k)
         if 'set' in k or 'mask' in k or k in ['std', 'mean']:
             if type(v[0]) != torch.Tensor:
                 result[k] = torch.tensor(v)
@@ -46,11 +48,45 @@ def collate(result):
         elif 'att' in k:
             # OUTER LOOP, Z, Tensor
             inner = len(v[0])
+            print("2.1")
+            print(type(v), type(v[0]), type(v[0][0]))
             outer = len(v)
             lst = list()
+            print("2.2")
             for i in range(inner):
+                pass
+            '''
+                print("2.3")
                 # 2, HEAD, BATCH, CARD, IND
-                lst.append(torch.cat([v[j][i] for j in range(outer)], 2))
+                #lst.append(torch.cat([v[j][i] for j in range(outer)], 2))
+                # MY CHANGE:
+                my_shape = None
+                print("b")
+                print("outer:", outer)
+                for j in range(outer):
+                    if my_shape == None:
+                        my_shape = v[j][i].shape
+
+                    a = v[j][i].shape
+
+                    if a[0] != my_shape[0] or a[1] != my_shape[1] or a[3] != my_shape[3] or a[4] != my_shape[4]:
+                        print("my_shape, v[j][i]:", my_shape, v[j][i].shape, j, i)
+                b = [v[j][i] for j in range(outer)]
+                print("hi")
+                torch.cat([v[j][i] for j in range(outer//10)], 2)
+                print("hi again")
+                c = torch.cat(b[0:outer//2], 2)
+                print("hihi")
+                d = torch.cat(b[outer//2:], 2)
+                print("xd")
+                torch.cat([c, d], 2)
+                print("len(b):", len(b))
+                a = torch.cat(b, 2)
+                print("apppend")
+                lst.append(a)
+            '''
+
+            print("2.4")
             result[k] = lst
         elif k in ['posteriors', 'priors']:
             # OUTER LOOP, Z, Tensor
@@ -107,11 +143,17 @@ def sample(model, args, data):
 
 
 def train_recon(model, args):
+    print("train recon 0")
     loader = get_train_loader(args)
     save_dir = os.path.dirname(args.resume_checkpoint)
+    print("train recon")
 
-    summary = dict()
+    #summary = dict()
+    summary = defaultdict(list)
     for idx, data in enumerate(tqdm(loader)):
+        if idx >= 3000:
+            break
+        print(idx, data.keys())
         gt_result = {
             'gt_set': data['set'],
             'gt_mask': data['set_mask'],
@@ -121,6 +163,13 @@ def train_recon(model, args):
             'mid': data['mid'],
             'cardinality': data['cardinality'],
         }
+        result = recon(model, args, data)
+        result.update(gt_result)
+
+        for k, v in result.items():
+            summary[k].append(v)
+
+        '''
         result = dict()
 
         # recon needs : set, mask, enc_att, dec_att, posterior, gt_set, gt_mask
@@ -132,9 +181,11 @@ def train_recon(model, args):
                 summary[k] = []
         for k, v in result.items():
             summary[k].append(v)
+        '''
 
+    print("before collat in train recon")
     summary = collate(summary)
-
+    print("after")
     summary_name = Path(save_dir) / f"summary_train_recon.pth"
     torch.save(summary, summary_name)
     print(summary_name)
@@ -146,7 +197,7 @@ def sample_and_recon(model, args):
 
     loader = get_test_loader(args)
     save_dir = os.path.dirname(args.resume_checkpoint)
-
+    print("1")
     summary = dict()
     for idx, data in enumerate(tqdm(loader)):
         gt_result = {
@@ -172,12 +223,12 @@ def sample_and_recon(model, args):
                 summary[k] = []
         for k, v in result.items():
             summary[k].append(v)
-
+    print("2")
     summary = collate(summary)
-
+    print("3")
     summary_name = Path(save_dir) / f"summary.pth"
     torch.save(summary, summary_name)
-    print(summary_name)
+    print("Saving summary to:", summary_name)
 
 
 def main(args):
@@ -202,14 +253,18 @@ def main(args):
             updated_ckpt.update({k: v})
         model.load_state_dict(updated_ckpt)
         print("Load success")
-
+    
+    print("ASD")
     model.eval()
     with torch.no_grad():
+        print("QWE")
         sample_and_recon(model, args)
+        print("ZXC")
         train_recon(model, args)
 
 
 if __name__ == '__main__':
     args = get_args()
+    args.batch_size = 4
     print(args)
     main(args)
