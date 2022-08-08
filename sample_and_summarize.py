@@ -169,19 +169,24 @@ def train_recon(model, args):
         for k, v in result.items():
             summary[k].append(v)
 
-        '''
-        result = dict()
-
-        # recon needs : set, mask, enc_att, dec_att, posterior, gt_set, gt_mask
-        recon_result = recon(model, args, data)
-        result.update(recon_result)
+    for idx, data in enumerate(tqdm(loader)):
+        if idx < 3000:
+            continue
+        print(idx, data.keys())
+        gt_result = {
+            'gt_set': data['set'],
+            'gt_mask': data['set_mask'],
+            'mean': data['mean'],
+            'std': data['std'],
+            'sid': data['sid'],
+            'mid': data['mid'],
+            'cardinality': data['cardinality'],
+        }
+        result = recon(model, args, data)
         result.update(gt_result)
-        if len(summary.keys()) == 0:
-            for k in result.keys():
-                summary[k] = []
+
         for k, v in result.items():
             summary[k].append(v)
-        '''
 
     print("before collat in train recon")
     summary = collate(summary)
