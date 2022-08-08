@@ -48,13 +48,12 @@ def collate(result):
         elif 'att' in k:
             # OUTER LOOP, Z, Tensor
             inner = len(v[0])
-            print("2.1")
-            print(type(v), type(v[0]), type(v[0][0]))
             outer = len(v)
             lst = list()
-            print("2.2")
             for i in range(inner):
                 pass
+                # 2, HEAD, BATCH, CARD, IND
+                #lst.append(torch.cat([v[j][i] for j in range(outer)], 2))
             '''
                 print("2.3")
                 # 2, HEAD, BATCH, CARD, IND
@@ -148,12 +147,10 @@ def train_recon(model, args):
     save_dir = os.path.dirname(args.resume_checkpoint)
     print("train recon")
 
-    #summary = dict()
     summary = defaultdict(list)
     for idx, data in enumerate(tqdm(loader)):
-        if idx >= 3000:
-            break
-        print(idx, data.keys())
+        if idx % 100 == 0:
+            print(idx, data.keys())
         gt_result = {
             'gt_set': data['set'],
             'gt_mask': data['set_mask'],
@@ -169,24 +166,7 @@ def train_recon(model, args):
         for k, v in result.items():
             summary[k].append(v)
 
-    for idx, data in enumerate(tqdm(loader)):
-        if idx < 3000:
-            continue
-        print(idx, data.keys())
-        gt_result = {
-            'gt_set': data['set'],
-            'gt_mask': data['set_mask'],
-            'mean': data['mean'],
-            'std': data['std'],
-            'sid': data['sid'],
-            'mid': data['mid'],
-            'cardinality': data['cardinality'],
-        }
-        result = recon(model, args, data)
-        result.update(gt_result)
-
-        for k, v in result.items():
-            summary[k].append(v)
+        del gt_result, result
 
     print("before collat in train recon")
     summary = collate(summary)
