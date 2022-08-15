@@ -10,3 +10,4 @@ cache
 figures/images
 figures/images*
 .DS_Store
+figures/latent_space.pdf
