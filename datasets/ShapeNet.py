@@ -42,6 +42,16 @@ def init_np_seed(worker_id):
     np.random.seed(seed % 4294967296)
 
 
+def get_unn_from_string(s):
+    unn_idx = s.find("unn") + len("unn")
+    # unn is 2 char long
+    if len(s) > unn_idx + 1:
+        unn = s[unn_idx:unn_idx+2]
+    else:  # unn is 1 char long
+        unn = s[unn_idx]
+    return unn
+
+
 class Uniform15KPC(torch.utils.data.Dataset):
     def __init__(self, root, subdirs, tr_sample_size=10000, te_sample_size=10000, split='train', scale=1.,
                  standardize_per_shape=False,
@@ -101,6 +111,7 @@ class Uniform15KPC(torch.utils.data.Dataset):
                 self.all_points.append(point_cloud[np.newaxis, ...])
                 self.cate_idx_lst.append(cate_idx)
                 self.all_cate_mids.append((subd, mid))
+                self.unns.append(get_unn_from_string(mid))
 
         # Shuffle the index deterministically (based on the number of examples)
         self.shuffle_idx = list(range(len(self.all_points)))
@@ -108,6 +119,7 @@ class Uniform15KPC(torch.utils.data.Dataset):
         self.cate_idx_lst = [self.cate_idx_lst[i] for i in self.shuffle_idx]
         self.all_points = [self.all_points[i] for i in self.shuffle_idx]
         self.all_cate_mids = [self.all_cate_mids[i] for i in self.shuffle_idx]
+        self.unns = [self.unns[i] for i in self.shuffle_idx]
 
         # Normalization
         self.all_points = np.concatenate(self.all_points)  # (N, 15000, 3)
@@ -203,13 +215,15 @@ class Uniform15KPC(torch.utils.data.Dataset):
         m, s = torch.from_numpy(np.asarray(m)), torch.from_numpy(np.asarray(s))
         cate_idx = self.cate_idx_lst[idx]
         sid, mid = self.all_cate_mids[idx]
+        unn = self.unns[idx]
 
         return {
             'idx': idx,
             'set': tr_out if self.split == 'train' else te_out,
             'offset': tr_ofs if self.split == 'train' else te_ofs,
             'mean': m, 'std': s, 'label': cate_idx,
-            'sid': sid, 'mid': mid
+            'sid': sid, 'mid': mid,
+            "unn": unn
         }
 
 
