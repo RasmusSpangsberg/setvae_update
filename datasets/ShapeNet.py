@@ -44,11 +44,12 @@ def init_np_seed(worker_id):
 
 def get_unn_from_string(s):
     unn_idx = s.find("unn") + len("unn")
-    # unn is 2 char long
+    unn = s[unn_idx]
+    
+    # unn is 2 chars long
     if len(s) > unn_idx + 1:
-        unn = s[unn_idx:unn_idx+2]
-    else:  # unn is 1 char long
-        unn = s[unn_idx]
+        unn += s[unn_idx+1]
+
     return unn
 
 
