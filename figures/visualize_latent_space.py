@@ -129,9 +129,9 @@ def main(args):
             # 2d plots
             figure, axis = plt.subplots(3, 2, figsize=(12, 10))
             x = i % 3
-            y = i > 2
+            y = int(i > 2)
 
-            visualize_latent_variable(features[i], unns, axis=axis[x, y], dimensions=2, reduction_method_name=reduction_method_name)
+            visualize_latent_variable(feature, unns, axis=axis[x, y], dimensions=2, reduction_method_name=reduction_method_name)
 
             if x == 0 and y == 0:
                 lgnd = figure.legend()
