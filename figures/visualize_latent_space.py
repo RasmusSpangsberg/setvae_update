@@ -81,6 +81,7 @@ def visualize_latent_variable(latent_variables, unns, axis=None, reduction_metho
     if dimensions == 3:
         return data_frames
 
+
 def encode_data_with_model(model, data):
     # ground truth
     gt, gt_mask = data['set'], data['set_mask']
@@ -95,8 +96,8 @@ def main(args):
     model = SetVAE(args)
     model = model.cuda()
 
-    save_dir = Path("checkpoints") / args.log_name
-    args.resume_checkpoint = os.path.join(save_dir, f'checkpoint-{args.epochs - 1}.pt')
+    model_dir = Path("checkpoints") / args.log_name
+    args.resume_checkpoint = os.path.join(model_dir, f'checkpoint-{args.epochs - 1}.pt')
     checkpoint = torch.load(args.resume_checkpoint)
 
     model.load_state_dict(checkpoint['model'])
@@ -105,30 +106,54 @@ def main(args):
     args.batch_size = 128
     loader = get_train_loader(args)
 
-    i = 0
     features = []
     unns = []
     for data in loader:
-        i+=1
-
         encoding = encode_data_with_model(model, data)
         features_ = encoding["features"]
         unns += data["unn"]
-        if i == 1:  # TODO add empty np arry in start, to avoid this boundary condition
+
+        if len(features) == 0:
             features = [feature.cpu().detach().numpy() for feature in features_]
         else:
             for j in range(len(features)):
                 features[j] = np.concatenate((features[j], features_[j].cpu().detach().numpy()))
 
-    print("features shape:", len(features))
-    for feature in features:
-        print(feature.shape)
-    
-    # 2d
     for reduction_method_name in ["umap", "pca", "tsne"]:
+        figures_path = f"latent_space_viz/{reduction_method_name}"
+
+        if not os.path.exists(figures_path):
+            os.makedirs(figures_path)
+
+        for i, feature in enumerate(features):
+            # 2d plots
+            figure, axis = plt.subplots(3, 2, figsize=(12, 10))
+            x = i % 3
+            y = i > 2
+
+            visualize_latent_variable(features[i], unns, axis=axis[x, y], dimensions=2, reduction_method_name=reduction_method_name)
+
+            if x == 0 and y == 0:
+                lgnd = figure.legend()
+                for x in range(len(lgnd.legendHandles)):
+                    lgnd.legendHandles[x]._sizes = [30]
+
+            figure.savefig(f"latent_space_viz/{reduction_method_name}/2d.pdf")
+
+            # 3d plots
+            data_frames = visualize_latent_variable(feature, unns, dimensions=3, reduction_method_name=reduction_method_name)
+
+            data_frame = pd.concat(data_frames, ignore_index=True)
+            data_frame[["red", "green", "blue"]] = data_frame[["red", "green", "blue"]].astype(np.uint8)
+
+            pc = PyntCloud(data_frame)
+            pc.to_file(f"latent_space_viz/{reduction_method_name}/layer{i}.ply")
+
+        '''
+        # 2d plots
         k = 0
         figure, axis = plt.subplots(3, 2, figsize=(12, 10))
-
+        
         for i in range(3):
             for j in range(2):
                 visualize_latent_variable(features[k], unns, axis=axis[i, j], dimensions=2, reduction_method_name=reduction_method_name)
@@ -141,8 +166,7 @@ def main(args):
 
         figure.savefig(f"latent_space_viz/{reduction_method_name}.pdf")
     
-    # 3d
-    for reduction_method_name in ["umap", "pca", "tsne"]:
+        # 3d plots
         for i, feature in enumerate(features):
             data_frames = visualize_latent_variable(feature, unns, dimensions=3, reduction_method_name=reduction_method_name)
 
@@ -151,6 +175,8 @@ def main(args):
 
             pc = PyntCloud(data_frame)
             pc.to_file(f"latent_space_viz/{reduction_method_name}_{i}.ply")
+        '''
+
 
 if __name__ == "__main__":
     args = get_args()
