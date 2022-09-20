@@ -78,6 +78,7 @@ class Uniform15KPC(torch.utils.data.Dataset):
         self.all_cate_mids = []
         self.cate_idx_lst = []
         self.all_points = []
+        self.unns = []
         for cate_idx, subd in enumerate(self.subdirs):
             # NOTE: [subd] here is synset id
             sub_path = os.path.join(root, subd, self.split)
