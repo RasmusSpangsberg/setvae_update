@@ -10,4 +10,5 @@ cache
 figures/images
 figures/images*
 .DS_Store
-figures/latent_space.pdf
+figures/point_clouds/*
+latent_space_viz/*
