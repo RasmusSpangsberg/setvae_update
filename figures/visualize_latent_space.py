@@ -123,35 +123,34 @@ def main(args):
     print("features shape:", len(features))
     for feature in features:
         print(feature.shape)
+    
+    # 2d
+    for reduction_method_name in ["umap", "pca", "tsne"]:
+        k = 0
+        figure, axis = plt.subplots(3, 2, figsize=(12, 10))
 
-    dimensions = 3
+        for i in range(3):
+            for j in range(2):
+                visualize_latent_variable(features[k], unns, axis=axis[i, j], dimensions=2, reduction_method_name=reduction_method_name)
 
-    if dimensions == 2:
-        for reduction_method_name in ["umap", "pca", "tsne"]:
-            k = 0
-            figure, axis = plt.subplots(3, 2, figsize=(12, 10))
+                k += 1
+                if i == 0 and j == 0:
+                    lgnd = figure.legend()
+                    for x in range(len(lgnd.legendHandles)):
+                        lgnd.legendHandles[x]._sizes = [30]
 
-            for i in range(3):
-                for j in range(2):
-                    visualize_latent_variable(features[k], unns, axis=axis[i, j], dimensions=dimensions, reduction_method_name=reduction_method_name)
+        figure.savefig(f"latent_space_viz/{reduction_method_name}.pdf")
+    
+    # 3d
+    for reduction_method_name in ["umap", "pca", "tsne"]:
+        for i, feature in enumerate(features):
+            data_frames = visualize_latent_variable(feature, unns, dimensions=3, reduction_method_name=reduction_method_name)
 
-                    k += 1
-                    if i == 0 and j == 0:
-                        lgnd = figure.legend()
-                        for x in range(len(lgnd.legendHandles)):
-                            lgnd.legendHandles[x]._sizes = [30]
+            data_frame = pd.concat(data_frames, ignore_index=True)
+            data_frame[["red", "green", "blue"]] = data_frame[["red", "green", "blue"]].astype(np.uint8)
 
-            figure.savefig(f"latent_space_viz/{reduction_method_name}.pdf")
-    elif dimensions == 3:
-        for reduction_method_name in ["umap", "pca", "tsne"]:
-            for i, feature in enumerate(features):
-                data_frames = visualize_latent_variable(feature, unns, dimensions=dimensions, reduction_method_name=reduction_method_name)
-
-                data_frame = pd.concat(data_frames, ignore_index=True)
-                data_frame[["red", "green", "blue"]] = data_frame[["red", "green", "blue"]].astype(np.uint8)
-
-                pc = PyntCloud(data_frame)
-                pc.to_file(f"latent_space_viz/{reduction_method_name}_{i}.ply")
+            pc = PyntCloud(data_frame)
+            pc.to_file(f"latent_space_viz/{reduction_method_name}_{i}.ply")
 
 if __name__ == "__main__":
     args = get_args()
