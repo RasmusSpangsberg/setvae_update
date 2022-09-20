@@ -244,7 +244,6 @@ def draw_aggregated_attention_pointcloud(x, x_mask, alpha, back_color=(1, 1, 1),
         alpha = alpha.mean(0)
     else:
         alpha = alpha.max(dim=0)[0]
-    print(alpha.shape)
 
     imgs = list()
     for a, p, m in zip(alpha.unbind(0), x, x_mask):  # [M, I], [N, 2], [N,]
@@ -294,13 +293,6 @@ def draw_attention_pointcloud(x, x_mask, alpha, back_color=(1, 1, 1), W=256, col
     H = int(W * figh / figw)
     n_heads, bsize, N, isize = alpha.shape
 
-    """
-    palette = np.concatenate((plt.get_cmap('Set1')(range(10)),
-                              plt.get_cmap('Set2')(range(8)),
-                              plt.get_cmap('Set3')(range(12)),
-                              plt.get_cmap('Set1')(range(10))))
-    palette = palette[:alpha.shape[-1], :-1]
-    """
     palette = plt.get_cmap('gist_rainbow')(np.linspace(0., 1., isize, endpoint=False))[:, :-1]
 
     alpha = alpha / (alpha.mean(2, keepdims=True) + 1e-3)
@@ -401,13 +393,18 @@ def draw_attention_open3d(x, x_mask, alpha, config='camera_config.json', color_o
             pcl.points = o3d.utility.Vector3dVector(p)
             pcl.colors = o3d.utility.Vector3dVector(rgb)
 
+            # save point cloud to file
+            filename = "point_clouds/pc" + str(counter) + ".ply"
+            o3d.io.write_point_cloud(filename, pcl)
+
             if view:
                 o3d.visualization.draw_geometries([pcl])
             else:
                 img = o3d2numpy(pcl, config)
-                #                 plt.imshow(img)
-                #                 plt.show()
                 imgs.append(torch.tensor(img))
+
+    print("Saved models to point_clouds/")
+
     H, W, C = imgs[0].shape
     imgs = torch.stack(imgs, dim=0).reshape([bsize, n_heads, H, W, C]).permute(0, 1, 4, 2, 3)  # [B, n_heads, 3, H, W]
 
