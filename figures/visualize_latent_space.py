@@ -54,16 +54,13 @@ def visualize_latent_variable(latent_variables, unns, axis=None, reduction_metho
 
     reduced_latent_variables = reduce_dimensionality(latent_variables, reduction_method_name, dimensions)
 
-    teeth_types = [["1", "2", "3", "14", "15", "16", "17", "18", "19", "32", "31", "30"], ["4", "5", "12", "13", "20", "21", "29", "28"], ["6", "11", "22", "27"], ["7", "8", "9", "10",  "26", "25", "24", "23"]]
-    teeth_types_label = ['Molar', 'Pre-molar', "Canine", "Incisor"]
-
     # used for visualizing 3 dimensions
     data_frames = []
 
     for unn in set(unns):
         matched = [unn == x for x in unns]
-
         xs = reduced_latent_variables[matched, :]
+
         if dimensions == 2:
             axis.scatter(xs[:, 0], xs[:, 1], label=unn, s=0.1)
         elif dimensions == 3:
@@ -80,6 +77,43 @@ def visualize_latent_variable(latent_variables, unns, axis=None, reduction_metho
 
     if dimensions == 3:
         return data_frames
+
+
+def visualize_latent_variable_2d(latent_variables, unns, axis, reduction_method):
+    color_mapping = plt.cm.get_cmap("hsv", 32)  # 32 different unn
+    reduced_latent_variables = reduce_dimensionality(latent_variables, reduction_method, 2)
+
+    for unn in set(unns):
+        matched = [unn == x for x in unns]
+        xs = reduced_latent_variables[matched, :]
+        axis.scatter(xs[:, 0], xs[:, 1], label=unn, s=0.1, cmap=color_mapping(unn))
+
+
+def visualize_latent_variable_3d(latent_variables, unns, reduction_method):
+    color_mapping = plt.cm.get_cmap("hsv", 32)  # 32 different unn
+    reduced_latent_variables = reduce_dimensionality(latent_variables, reduction_method, 3)
+
+    data_frames = []
+
+    for unn in set(unns):
+        matched = [unn == x for x in unns]
+        xs = reduced_latent_variables[matched, :]
+
+        h, s, v = color_mapping(int(unn))[:-1]
+        r, g, b = colorsys.hsv_to_rgb(h, s, v)
+        r = int(r * 255)
+        g = int(g * 255)
+        b = int(b * 255)
+
+        points = [{"x": x[0], "y": x[1], "z": x[2], "red": r, "green": g, "blue": b} for x in xs]
+
+        data_frame = pd.DataFrame(points)
+        data_frames.append(data_frame)
+
+    data_frame = pd.concat(data_frames, ignore_index=True)
+    data_frame[["red", "green", "blue"]] = data_frame[["red", "green", "blue"]].astype(np.uint8)
+
+    return PyntCloud(data_frame)
 
 
 def encode_data_with_model(model, data):
@@ -128,8 +162,8 @@ def main(args):
         for i, feature in enumerate(features):
             # 2d plots
             figure, axis = plt.subplots(3, 2, figsize=(12, 10))
-            x = i % 3
-            y = int(i > 2)
+            x = i % 4
+            y = int(i > 3)
 
             visualize_latent_variable(feature, unns, axis=axis[x, y], dimensions=2, reduction_method_name=reduction_method_name)
 
@@ -141,41 +175,8 @@ def main(args):
             figure.savefig(f"latent_space_viz/{reduction_method_name}/2d.pdf")
 
             # 3d plots
-            data_frames = visualize_latent_variable(feature, unns, dimensions=3, reduction_method_name=reduction_method_name)
-
-            data_frame = pd.concat(data_frames, ignore_index=True)
-            data_frame[["red", "green", "blue"]] = data_frame[["red", "green", "blue"]].astype(np.uint8)
-
-            pc = PyntCloud(data_frame)
-            pc.to_file(f"latent_space_viz/{reduction_method_name}/layer{i}.ply")
-
-        '''
-        # 2d plots
-        k = 0
-        figure, axis = plt.subplots(3, 2, figsize=(12, 10))
-        
-        for i in range(3):
-            for j in range(2):
-                visualize_latent_variable(features[k], unns, axis=axis[i, j], dimensions=2, reduction_method_name=reduction_method_name)
-
-                k += 1
-                if i == 0 and j == 0:
-                    lgnd = figure.legend()
-                    for x in range(len(lgnd.legendHandles)):
-                        lgnd.legendHandles[x]._sizes = [30]
-
-        figure.savefig(f"latent_space_viz/{reduction_method_name}.pdf")
-    
-        # 3d plots
-        for i, feature in enumerate(features):
-            data_frames = visualize_latent_variable(feature, unns, dimensions=3, reduction_method_name=reduction_method_name)
-
-            data_frame = pd.concat(data_frames, ignore_index=True)
-            data_frame[["red", "green", "blue"]] = data_frame[["red", "green", "blue"]].astype(np.uint8)
-
-            pc = PyntCloud(data_frame)
-            pc.to_file(f"latent_space_viz/{reduction_method_name}_{i}.ply")
-        '''
+            point_cloud = visualize_latent_variable(feature, unns, dimensions=3, reduction_method_name=reduction_method_name)
+            point_cloud.to_file(f"latent_space_viz/{reduction_method_name}/layer{i}.ply")
 
 
 if __name__ == "__main__":
