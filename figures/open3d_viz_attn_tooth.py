@@ -32,8 +32,8 @@ os.makedirs(imgdir_recon, exist_ok=True)
 os.makedirs(imgdir_gen, exist_ok=True)
 os.makedirs(imgdir_gt_train, exist_ok=True)
 
-
 # validation and generated
+print("validation and generated")
 summary = torch.load(summary_name)
 for k, v in summary.items():
     try:
@@ -42,8 +42,15 @@ for k, v in summary.items():
         print(f"{k}: {len(v)}")
 len_att = len(summary['dec_att'])
 
+print("loading summary...")
+summary = torch.load(summary_name)
+print("done")
+recon_targets = list(range(len(summary['gt_mask'])))[:]
+len_att = len(summary['dec_att'])
+enc_att = [summary['enc_att'][l][:, :, recon_targets] for l in range(len_att)]
 
 # train
+print("loading train...")
 summary_train = torch.load(summary_train_name)
 for k, v in summary_train.items():
     try:
@@ -51,7 +58,6 @@ for k, v in summary_train.items():
     except AttributeError:
         print(f"{k}: {len(v)}")
 len_att_train = len(summary_train['dec_att'])
-
 
 recon_targets = list(range(len(summary['gt_mask'])))[:]
 gen_targets = list(range(len(summary['smp_mask'])))[:]
@@ -80,18 +86,10 @@ enc_att_train = [summary_train['enc_att'][l][:, :, recon_targets_train] for l in
 def attention_selector(gt, gt_mask, att, lidx=0, projection=0, selected_heads=None, palette_permutation=None):
     if selected_heads is not None:
         att = [a[:, selected_heads].view(a.size(0), len(selected_heads), a.size(2), a.size(3), a.size(4)) for a in att]
-
-    print(len(att), lidx, projection)
-    print(len(att[lidx]))
-    qwe = att[lidx][projection]
      
-    return draw_attention_open3d(gt, gt_mask, qwe, color_opt='gist_rainbow', size=10, palette_permutation=palette_permutation)
-    #return draw_attention_open3d(gt, gt_mask, att[lidx][projection], color_opt='gist_rainbow', size=10, palette_permutation=palette_permutation)
+    return draw_attention_open3d(gt, gt_mask, att[lidx][projection], color_opt='gist_rainbow', size=10, palette_permutation=palette_permutation)
 
-print("starting....")
-#for topdown in tqdm(range(2,5)):
-for topdown in range(2,5):
-    print("start...")
+for topdown in tqdm(range(2,5)):
     for projection in [0]:
         if topdown == 2:
             print("topdown == 2")
@@ -126,7 +124,6 @@ for topdown in range(2,5):
         del gt_imgs
 print('gt DONE')
 
-
 for topdown in tqdm(range(2, 5)):
     for projection in [1]:
         if topdown == 2:
@@ -156,7 +153,6 @@ for topdown in tqdm(range(2, 5)):
                 save_image(gen_img.float(), os.path.join(imgdir_gen, f'{topdown}_{projection}_{head}_{data_idx}.png'))
         del gen_imgs
 print('gen DONE')
-
 
 for topdown in tqdm(range(2, 5)):
     for projection in [0]:

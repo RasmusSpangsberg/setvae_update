@@ -51,9 +51,8 @@ def collate(result):
             outer = len(v)
             lst = list()
             for i in range(inner):
-                pass
                 # 2, HEAD, BATCH, CARD, IND
-                #lst.append(torch.cat([v[j][i] for j in range(outer)], 2))
+                lst.append(torch.cat([v[j][i] for j in range(outer)], 2))
             '''
                 print("2.3")
                 # 2, HEAD, BATCH, CARD, IND
@@ -71,21 +70,13 @@ def collate(result):
                     if a[0] != my_shape[0] or a[1] != my_shape[1] or a[3] != my_shape[3] or a[4] != my_shape[4]:
                         print("my_shape, v[j][i]:", my_shape, v[j][i].shape, j, i)
                 b = [v[j][i] for j in range(outer)]
-                print("hi")
                 torch.cat([v[j][i] for j in range(outer//10)], 2)
-                print("hi again")
                 c = torch.cat(b[0:outer//2], 2)
-                print("hihi")
                 d = torch.cat(b[outer//2:], 2)
-                print("xd")
                 torch.cat([c, d], 2)
-                print("len(b):", len(b))
                 a = torch.cat(b, 2)
-                print("apppend")
                 lst.append(a)
             '''
-
-            print("2.4")
             result[k] = lst
         elif k in ['posteriors', 'priors']:
             # OUTER LOOP, Z, Tensor
@@ -142,16 +133,12 @@ def sample(model, args, data):
 
 
 def train_recon(model, args):
-    print("train recon 0")
     loader = get_train_loader(args)
     save_dir = os.path.dirname(args.resume_checkpoint)
-    print("train recon")
 
     summary = defaultdict(list)
     for idx, data in enumerate(tqdm(loader)):
-        if idx % 100 == 0:
-            print(idx, data.keys())
-        gt_result = {
+        result = {
             'gt_set': data['set'],
             'gt_mask': data['set_mask'],
             'mean': data['mean'],
@@ -160,17 +147,12 @@ def train_recon(model, args):
             'mid': data['mid'],
             'cardinality': data['cardinality'],
         }
-        result = recon(model, args, data)
-        result.update(gt_result)
+        result.update(recon(model, args, data))
 
         for k, v in result.items():
             summary[k].append(v)
 
-        del gt_result, result
-
-    print("before collat in train recon")
     summary = collate(summary)
-    print("after")
     summary_name = Path(save_dir) / f"summary_train_recon.pth"
     torch.save(summary, summary_name)
     print(summary_name)
@@ -182,7 +164,6 @@ def sample_and_recon(model, args):
 
     loader = get_test_loader(args)
     save_dir = os.path.dirname(args.resume_checkpoint)
-    print("1")
     summary = dict()
     for idx, data in enumerate(tqdm(loader)):
         gt_result = {
@@ -208,13 +189,12 @@ def sample_and_recon(model, args):
                 summary[k] = []
         for k, v in result.items():
             summary[k].append(v)
-    print("2")
     summary = collate(summary)
-    print("3")
     summary_name = Path(save_dir) / f"summary.pth"
     torch.save(summary, summary_name)
     print("Saving summary to:", summary_name)
 
+    del summary, result, data, loader
 
 def main(args):
     model = SetVAE(args)
@@ -239,17 +219,14 @@ def main(args):
         model.load_state_dict(updated_ckpt)
         print("Load success")
     
-    print("ASD")
     model.eval()
     with torch.no_grad():
-        print("QWE")
         sample_and_recon(model, args)
-        print("ZXC")
         train_recon(model, args)
 
 
 if __name__ == '__main__':
     args = get_args()
-    args.batch_size = 4
-    print(args)
+    args.batch_size = 64
+    print("args:", args)
     main(args)
