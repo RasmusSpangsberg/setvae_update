@@ -19,7 +19,7 @@ log_name=gen/shapenet15k-tooth/camera-ready
 shapenet_data_dir="/train/SetVae/ShapeNetCore.v2.PC15k"
 
 # the argument to deepspeed (--include) means that we only run on GPU 1, not 0
-deepspeed --include localhost:1 train.py \
+deepspeed --include localhost:0 train.py \
   --cates tooth \
   --input_dim ${input_dim} \
   --max_outputs ${max_outputs} \
@@ -42,7 +42,7 @@ deepspeed --include localhost:1 train.py \
   --save_freq 5 \
   --viz_freq 1000 \
   --log_freq 10 \
-  --val_freq 1000 \
+  --val_freq 100 \
   --scheduler ${scheduler} \
   --slot_att \
   --ln \

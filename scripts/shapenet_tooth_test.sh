@@ -10,7 +10,7 @@ num_heads=4
 
 dataset_type=shapenet15k
 log_name=gen/shapenet15k-tooth/camera-ready
-shapenet_data_dir="/train/ShapeNet/ShapeNetCore.v2.PC15k"
+shapenet_data_dir="/train/SetVae/ShapeNetCore.v2.PC15k"
 epoch=200
 seed=34678
 

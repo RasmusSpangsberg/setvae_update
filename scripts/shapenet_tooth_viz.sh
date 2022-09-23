@@ -13,7 +13,7 @@ dataset_type=shapenet15k
 log_name=gen/shapenet15k-tooth/camera-ready
 shapenet_data_dir="/train/SetVae/ShapeNetCore.v2.PC15k"
 
-CUDA_VISIBLE_DEVICES="1" python sample_and_summarize.py \
+CUDA_VISIBLE_DEVICES="0" python sample_and_summarize.py \
   --cates tooth \
   --input_dim ${input_dim} \
   --max_outputs ${max_outputs} \
